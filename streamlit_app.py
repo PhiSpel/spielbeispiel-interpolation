@@ -21,23 +21,6 @@ matplotlib.font_manager.findfont('Humor Sans', rebuild_if_missing=True)
 
 # Define some helpful functions
 
-# def evaluate_shifted_polynomial(coeffs, x0, degree, xs):
-#     """
-#     Given an array coeffs of symbolic expressions in sympy.abc.x, where len(coeffs) >= degree, evaluate the shifted
-#     polynomial
-
-#       f(x) = sum( coeffs[k](x0)*(x-x0)**k)
-
-#     where the sum goes over k from 0 to degree. This is used to evaluate the Taylor polynomial, where the coefficients
-#     coeffs[k] = df^k/dx^k(x0)/k! are precomputed.
-#     """
-#     ys = np.ones(np.shape(xs)) * coeffs[0].subs(x, x0)
-#     xs_shift = xs - np.ones(np.shape(xs)) * x0
-#     for k in range(1, degree + 1):
-#         ys = ys + coeffs[k].subs(x, x0) * xs_shift ** k
-#     return ys
-
-
 # we need helper functions to interactively update horizontal and vertical lines in a plot
 # https://stackoverflow.com/questions/29331401/updating-pyplot-vlines-in-interactive-plot
 
@@ -137,8 +120,8 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     
     tmin = min(ti)
     tmax = max(ti)
-    ymin = min(yi)
-    ymax = max(yi)
+    ymin = min(min(yi),min(y_interp))
+    ymax = max(max(yi),max(y_interp))
 
     handles = st.session_state.handles
 
@@ -154,7 +137,9 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
         # plot the Taylor polynomial
         handles["datapoints"] = ax.plot(ti, yi,
                                         color='g',
+                                        linewidth=0,
                                         marker='o',
+                                        ms=15,
                                         label='Data points'.format(degree))[0]
 
         # plot f and append the plot handle
@@ -287,8 +272,7 @@ if __name__ == '__main__':
     with tcol2:
         if qr:
             st.markdown('## <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='
-                        'https://share.streamlit.io/joergbrech/truncated-taylor-series/main" alt='
-                        '"https://s.gwdg.de/PST5dv" width="200"/> https://s.gwdg.de/PST5dv',
+                        'https://share.streamlit.io/PhiSpel/spielbeispiel-interpolation/main" width="200"/>',
                         unsafe_allow_html=True)
 
     # prepare matplotlib plot
@@ -304,12 +288,12 @@ if __name__ == '__main__':
         interptype = st.selectbox(label="interpolation type", options=('linear', 'spline'), index=0)
         
     with col2:
-        ti_input = st.text_input(label='time values',
+        ti_input = st.text_input(label='time values, space-separated, same amount as sensor values!',
                                  value="0 1 2 3 4",
                                  placeholder="please input time values")
     with col3:
-        yi_input = st.text_input(label='sensor values',
-                                 value="0 1 2 3 4",
+        yi_input = st.text_input(label='sensor values, space-separated, same amount as time values!',
+                                 value="0 1 4 1 0",
                                  placeholder="please input sensor values")
     
     with col4:
