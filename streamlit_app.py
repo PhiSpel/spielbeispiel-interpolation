@@ -200,7 +200,8 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
         xticklabels.append("0")
     if tmin <= t0 <= tmax:
         xticks.append(t0)
-        xticklabels.append("t0")
+        xlabel_string = "t0=" + str(round(t0,1))
+        xticklabels.append(xlabel_string)
     ax.set_xticks(xticks)
     ax.set_xticklabels(xticklabels)
 
@@ -208,10 +209,11 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     yticklabels = []
     if ymin <= 0 <= ymax:
         yticks.append(0)
-        yticklabels.append("t0")
+        yticklabels.append("0")
     if ymin <= ft0 <= ymax:
         yticks.append(ft0)
-        yticklabels.append("f(t0)")
+        ylabel_string = "f(t0)=" + str(round(ft0,1))
+        yticklabels.append(ylabel_string)
     ax.set_yticks(yticks)
     ax.set_yticklabels(yticklabels)
 
@@ -224,7 +226,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     if visible:
         legend_handles.append(handles["interpol"])
     ax.legend(handles=legend_handles,
-              loc='lower center',
+              loc='upper center',
               bbox_to_anchor=(0.5, -0.15),
               ncol=2)
 
