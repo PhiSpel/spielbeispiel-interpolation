@@ -2,9 +2,9 @@ import streamlit as st
 
 from scipy.interpolate import interp1d, CubicSpline
 
-from sympy import *
-from sympy.parsing.sympy_parser import parse_expr
-from sympy.abc import x
+#from sympy import *
+#from sympy.parsing.sympy_parser import parse_expr
+#from sympy.abc import x
 
 import numpy as np
 import pandas as pd
@@ -116,7 +116,7 @@ def string_to_list(stringlist):
 
 # To Do: Why does caching update_plot hang?
 # @st.cache(suppress_st_warning=True)
-def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input):
+def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input, ticks_on):
     
     """
     Creates a Matplotlib plot if the dictionary st.session_state.handles is empty, otherwise
@@ -163,7 +163,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
                                         linewidth=0,
                                         marker='o',
                                         ms=15,
-                                        label='Data points'.format(degree))[0]
+                                        label='Data points')[0]#.format(degree))[0]
 
         # plot f and append the plot handle
         handles["interpol"] = ax.plot(t_interp, y_interp,
@@ -213,8 +213,12 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
         update_hlines(h=handles["hline"], y=float(ft0), xmin=tmin, xmax=t0)
 
     # set x and y ticks, labels and limits respectively
-    xticks = []
-    xticklabels = []
+    if ticks_on:
+        xticks = [x for x in range(round(tmin),round(tmax),1)]
+    else:
+        xticks=[]
+    xticklabels = [str(x) for x in xticks]
+    
     if tmin <= 0 <= tmax:
         xticks.append(0)
         xticklabels.append("0")
@@ -225,8 +229,11 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     ax.set_xticks(xticks)
     ax.set_xticklabels(xticklabels)
 
-    yticks = []
-    yticklabels = []
+    if ticks_on:
+        yticks = [x for x in range(round(ymin),round(ymax),1)]
+    else:
+        yticks=[]
+    yticklabels = [str(x) for x in yticks]
     if ymin <= 0 <= ymax:
         yticks.append(0)
         yticklabels.append("0")
@@ -240,6 +247,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     # set the x and y limits
     ax.set_xlim([tmin, tmax])
     ax.set_ylim([ymin, ymax])
+    
 
     # show legend
     legend_handles = [handles["datapoints"], ]
@@ -295,9 +303,11 @@ if __name__ == '__main__':
             del st.session_state['handles']
         xkcd = st.sidebar.checkbox("use xkcd-style", value=True, on_change=clear_figure)
 
+    ticks_on = st.sidebar.checkbox("show xticks and yticks", value=True, on_change=clear_figure)
+    
     # prepare standard values input
-    yi_std_str = "0 1 4 1 0"
-    ti_std_str = "0 1 2 3 4"
+    yi_std_str = "0 1 4 10 -3 3"
+    ti_std_str = "0 1 2 3 4 5"
     ti_std = string_to_list(ti_std_str)
     
     col1, col2, col3, col4 = st.columns(4)
@@ -322,14 +332,17 @@ if __name__ == '__main__':
             )
     
     col1,col2 = st.columns([1,3])
-    with col1:
-        if interptype == 'polynomial':
+    if interptype == 'polynomial':
+        with col1:
             deg = st.number_input(
                     'degree',
                     min_value=0,
                     max_value=30,
                     value=len(ti_std)
-                )
+        
+                    )
+    else:
+        deg=0
     # update the data
     t_interp,y_interp,ft0,ti,yi,factors = update_data(interptype,t0,ti_input,yi_input,res,deg)
     
@@ -407,7 +420,7 @@ if __name__ == '__main__':
 
     # update plot
     if 'Matplotlib' in backend:
-        update_plot(ti, yi, t0, ft0, t_interp, y_interp, toggle_interp,ti_input,yi_input)
+        update_plot(ti, yi, t0, ft0, t_interp, y_interp, toggle_interp,ti_input,yi_input,ticks_on)
         st.pyplot(st.session_state.mpl_fig)
     else:
         df = pd.DataFrame(data=np.array([ti, yi, t_interp, y_interp], dtype=np.float64).transpose(),
