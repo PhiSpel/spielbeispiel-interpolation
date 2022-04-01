@@ -75,9 +75,6 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
     length = max(ti)-min(ti)
     dt = length/resolution
     
-    factor_lin = 0
-    factor_const = 0
-    
     t_interp = np.arange(tmin,tmax,dt)
     if interptype == 'linear':
         y_interp=interp1d(ti,yi)
@@ -87,15 +84,29 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
         yleft = y_interp(t0-dtlin)
         factor_lin = (yright - yleft)/ (2*dtlin)
         factor_const = float(y_interp(t0)) - factor_lin*t0
+        factors=[factor_lin,factor_const]
     elif interptype == 'spline':
         y_interp=CubicSpline(ti,yi)
+        i = np.searchsorted(ti,t0)-1
+        factors=[y_interp.c[0,i],y_interp.c[1,i],y_interp.c[2,i],y_interp.c[3,i]]
+        # convert factors from fac*(x-x[i])**(3-k) to fac*x**(3-k)
+        # (x-xi)^3 = x^3 - 3xi x^2 + 3xi^2 x - xi^3
+        # (x-xi)^2 =           x^2 - 2xi   x + xi^2
+        # (x-xi)^1 =                       x - xi
+        xi = ti[i]
+        fac3 = factors[0]*1
+        fac2 = factors[0]*-3*xi     + factors[1]*1
+        fac1 = factors[0]*3*(xi**2) + factors[1]*-2*xi   + factors[2]*1
+        fac0 = factors[0]*-(xi**3)+ factors[1]*(xi**2) + factors[2]*-xi + factors[3]*1
+        factors = [fac3,fac2,fac1,fac0]
     elif interptype == 'polynomial':
         z=np.polyfit(ti,yi,degree)
         y_interp=np.poly1d(z)
+        factors = 0
     ft0 = float(y_interp(t0))
     y_interp = y_interp(t_interp)
     
-    return t_interp,y_interp,ft0,ti,yi,factor_lin,factor_const
+    return t_interp,y_interp,ft0,ti,yi,factors
 
 
 def string_to_list(stringlist):
@@ -320,15 +331,15 @@ if __name__ == '__main__':
                     value=len(ti_std)
                 )
     # update the data
-    t_interp,y_interp,ft0,ti,yi,factor_lin,factor_const = update_data(interptype,t0,ti_input,yi_input,res,deg)
+    t_interp,y_interp,ft0,ti,yi,factors = update_data(interptype,t0,ti_input,yi_input,res,deg)
     
     with col2:
         if interptype == 'linear':
-            factor_lin_round = round(factor_lin,3)
-            factor_const_round = round(factor_const,3)
+            factor_lin_round = round(factors[0],3)
+            factor_const_round = round(factors[1],3)
             linear_description = r'''
-            $f$ with linear approximation close to $t_0$ is $\approx'''
-            if factor_lin_round > 0:
+            $f$ with linear approximation around $t_0$ is $\approx'''
+            if not factor_lin_round == 0:
                 linear_description+= str(factor_lin_round) + '''x'''
             if factor_const_round > 0:
                 linear_description+='''+''' + str(factor_const_round) + '''$'''
@@ -338,9 +349,21 @@ if __name__ == '__main__':
                 linear_description+=str(factor_const_round) + '''$'''
             st.markdown(linear_description)
         if interptype == 'spline':
-            linear_description = r'''
-            $f$ with spline approximation close to $t_0$ is $\approx'''
-            st.markdown(linear_description)
+            factors = [round(elem,3) for elem in factors]
+            spline_description = r'''
+            $f$ with spline approximation around $t_0$ is $\approx'''
+            for i in range(0,4,1):
+                if (factors[i] > 0) & (i>0):
+                    spline_description += '+'
+                if not factors[i] == 0:
+                    if (3-i) > 1:
+                        spline_description += str(factors[i]) + 'x^' + str(3-i)
+                    elif (3-i) == 1:
+                        spline_description += str(factors[i]) + 'x'
+                    else:
+                        spline_description += str(factors[i])
+            spline_description+= '''$'''
+            st.markdown(spline_description)
         if interptype == 'polynomial':
             polynomial_description = r'''
             $$f(x)\approx'''
