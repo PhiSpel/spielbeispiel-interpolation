@@ -75,9 +75,18 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
     length = max(ti)-min(ti)
     dt = length/resolution
     
+    factor_lin = 0
+    factor_const = 0
+    
     t_interp = np.arange(tmin,tmax,dt)
     if interptype == 'linear':
         y_interp=interp1d(ti,yi)
+        # reverse-engineering function near t0
+        dtlin = dt/100
+        yright = y_interp(t0+dtlin)
+        yleft = y_interp(t0-dtlin)
+        factor_lin = (yright - yleft)/ (2*dtlin)
+        factor_const = float(y_interp(t0)) - factor_lin*t0
     elif interptype == 'spline':
         y_interp=CubicSpline(ti,yi)
     elif interptype == 'polynomial':
@@ -86,7 +95,7 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
     ft0 = float(y_interp(t0))
     y_interp = y_interp(t_interp)
     
-    return t_interp,y_interp,ft0,ti,yi
+    return t_interp,y_interp,ft0,ti,yi,factor_lin,factor_const
 
 
 def string_to_list(stringlist):
@@ -311,9 +320,27 @@ if __name__ == '__main__':
                     value=len(ti_std)
                 )
     # update the data
-    t_interp,y_interp,ft0,ti,yi = update_data(interptype,t0,ti_input,yi_input,res,deg)
+    t_interp,y_interp,ft0,ti,yi,factor_lin,factor_const = update_data(interptype,t0,ti_input,yi_input,res,deg)
     
     with col2:
+        if interptype == 'linear':
+            factor_lin_round = round(factor_lin,3)
+            factor_const_round = round(factor_const,3)
+            linear_description = r'''
+            $f$ with linear approximation close to $t_0$ is $\approx'''
+            if factor_lin_round > 0:
+                linear_description+= str(factor_lin_round) + '''x'''
+            if factor_const_round > 0:
+                linear_description+='''+''' + str(factor_const_round) + '''$'''
+            elif factor_const_round==0:
+                linear_description+='''$'''
+            else:
+                linear_description+=str(factor_const_round) + '''$'''
+            st.markdown(linear_description)
+        if interptype == 'spline':
+            linear_description = r'''
+            $f$ with spline approximation close to $t_0$ is $\approx'''
+            st.markdown(linear_description)
         if interptype == 'polynomial':
             polynomial_description = r'''
             $$f(x)\approx'''
@@ -327,7 +354,7 @@ if __name__ == '__main__':
                     elif degree == 0:
                         polynomial_description+= str(factor) + '''$$'''
                     else:
-                        polynomial_description+= str(factor) + '''x^''' + str(degree)
+                        polynomial_description+= str(factor) + '''x^{''' + str(degree) + '''}'''
             # factor0 = round(y_interp[deg],3)
             # if factor0 > 0:
             #     polynomial_description+= '''+'''
