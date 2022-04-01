@@ -61,7 +61,7 @@ def update_hlines(*, h, y, xmin=None, xmax=None):
 #############################################
 
 #@st.cache(suppress_st_warning=True)
-def update_data(interptype,t0,ti_input,yi_input,resolution):
+def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
     """
     y_interp,y = update_data(interptype,t,ti,yi)
     """
@@ -80,6 +80,9 @@ def update_data(interptype,t0,ti_input,yi_input,resolution):
         y_interp=interp1d(ti,yi)
     elif interptype == 'spline':
         y_interp=CubicSpline(ti,yi)
+    elif interptype == 'polynomial':
+        z=np.polyfit(ti,yi,degree)
+        y_interp=np.poly1d(z)
     ft0 = float(y_interp(t0))
     y_interp = y_interp(t_interp)
     
@@ -100,8 +103,8 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     updates a Matplotlib plot by modifying the plot handles stored in st.session_state.handles.
     The figure is stored in st.session_state.fig.
 
-    :param x0: Evaluation point of the function/Taylor polynomial
-    :param fx0: Function evaluated at x0
+    :param t0: Evaluation point of the function/Taylor polynomial
+    :param ft0: Function evaluated at t0
     :param xs: numpy-array of x-coordinates
     :param ys: numpy-array of f(x)-coordinates
     :param ps: numpy-array of P(x)-coordinates, where P is the Taylor polynomial
@@ -166,7 +169,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
         ax.spines['bottom'].set_position(('data', 0))
         ax.spines['right'].set_color('none')
 
-        # draw lines for (x0, f(x0))
+        # draw lines for (t0, f(t0))
         handles["vline"] = plt.vlines(x=t0, ymin=float(min(0, ft0)), ymax=float(max(0, ft0)), colors='black', ls=':', lw=2)
         handles["hline"] = plt.hlines(y=float(ft0), xmin=tmin, xmax=t0, colors='black', ls=':', lw=2)
 
@@ -197,7 +200,8 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
         xticklabels.append("0")
     if tmin <= t0 <= tmax:
         xticks.append(t0)
-        xticklabels.append("x0")
+        xlabel_string = "t0=" + str(round(t0,1))
+        xticklabels.append(xlabel_string)
     ax.set_xticks(xticks)
     ax.set_xticklabels(xticklabels)
 
@@ -205,10 +209,11 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     yticklabels = []
     if ymin <= 0 <= ymax:
         yticks.append(0)
-        yticklabels.append("t0")
+        yticklabels.append("0")
     if ymin <= ft0 <= ymax:
         yticks.append(ft0)
-        yticklabels.append("f_interp(t0)")
+        ylabel_string = "f(t0)=" + str(round(ft0,1))
+        yticklabels.append(ylabel_string)
     ax.set_yticks(yticks)
     ax.set_yticklabels(yticklabels)
 
@@ -221,7 +226,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     if visible:
         legend_handles.append(handles["interpol"])
     ax.legend(handles=legend_handles,
-              loc='lower center',
+              loc='upper center',
               bbox_to_anchor=(0.5, -0.15),
               ncol=2)
 
@@ -246,19 +251,6 @@ if __name__ == '__main__':
 
     toggle_interp = st.sidebar.checkbox(label='Display Interpolation', value=True)
 
-    # degree_max = 10
-    # if toggle_interp:
-    #     degree_max = st.sidebar.number_input(label='max degree', value=10)
-
-    # xcol1, xcol2 = st.sidebar.columns(2)
-    # with xcol1:
-    #     tmin = st.number_input(label='tmin', value=1.)
-    #     ymin = st.number_input(label='ymin', value=-50.)
-    # with xcol2:
-    #     tmax = st.number_input(label='tmax', value=4.)
-    #     ymax = st.number_input(label='ymax', value=50.)
-
-    
     res = st.sidebar.number_input(label='resolution', value=100, step=10)
 
     backend = 'Matplotlib' #st.sidebar.selectbox(label="Backend", options=('Matplotlib', 'Altair'), index=0)
@@ -283,17 +275,22 @@ if __name__ == '__main__':
             del st.session_state['handles']
         xkcd = st.sidebar.checkbox("use xkcd-style", value=True, on_change=clear_figure)
 
+    # prepare standard values input
+    yi_std_str = "0 1 4 1 0"
+    ti_std_str = "0 1 2 3 4"
+    ti_std = string_to_list(ti_std_str)
+    
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        interptype = st.selectbox(label="interpolation type", options=('linear', 'spline'), index=0)
+        interptype = st.selectbox(label="interpolation type", options=('linear', 'spline', 'polynomial'), index=0)
         
     with col2:
         ti_input = st.text_input(label='time values, space-separated, same amount as sensor values!',
-                                 value="0 1 2 3 4",
+                                 value=ti_std_str,
                                  placeholder="please input time values")
     with col3:
         yi_input = st.text_input(label='sensor values, space-separated, same amount as time values!',
-                                 value="0 1 4 1 0",
+                                 value=yi_std_str,
                                  placeholder="please input sensor values")
     
     with col4:
@@ -304,11 +301,39 @@ if __name__ == '__main__':
                 value=float(1.5)
             )
     
+    col1,col2 = st.columns([1,3])
+    with col1:
+        if interptype == 'polynomial':
+            deg = st.number_input(
+                    'degree',
+                    min_value=0,
+                    max_value=30,
+                    value=len(ti_std)
+                )
     # update the data
-    #coefficients = update_coefficients(func_str, degree_max)
-    t_interp,y_interp,ft0,ti,yi = update_data(interptype,t0,ti_input,yi_input,res)
-    #xs, ys, ps, fx0 = update_data(coefficients, degree, x0, xmin, xmax, res)
-
+    t_interp,y_interp,ft0,ti,yi = update_data(interptype,t0,ti_input,yi_input,res,deg)
+    
+    with col2:
+        if interptype == 'polynomial':
+            polynomial_description = r'''
+            $$f(x)\approx'''
+            for degree in range(deg,-1,-1):
+                factor = round(y_interp[deg-degree],3)
+                if not factor == 0:
+                    if (not degree == deg) & (factor > 0):
+                        polynomial_description+= '''+'''
+                    if degree == 1:
+                        polynomial_description+= str(factor) + '''x'''
+                    elif degree == 0:
+                        polynomial_description+= str(factor) + '''$$'''
+                    else:
+                        polynomial_description+= str(factor) + '''x^''' + str(degree)
+            # factor0 = round(y_interp[deg],3)
+            # if factor0 > 0:
+            #     polynomial_description+= '''+'''
+            
+            st.markdown(polynomial_description)
+    
     if 'Matplotlib' in backend:
 
         if xkcd:
