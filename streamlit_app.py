@@ -245,8 +245,8 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     ax.set_yticklabels(yticklabels)
 
     # set the x and y limits
-    ax.set_xlim([tmin, tmax])
-    ax.set_ylim([ymin, ymax])
+    ax.set_xlim([tmin-0.5, tmax+0.5])
+    ax.set_ylim([ymin-0.5, ymax+0.5])
     
 
     # show legend
