@@ -145,7 +145,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     #    dt = 0.5
     #else:
     #    dt = 0.1
-    dt = 1
+    #dt = 1
 
     ymin = min(min(yi),min(y_interp))
     ymax = max(max(yi),max(y_interp))
@@ -224,7 +224,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
 
     # set x and y ticks, labels and limits respectively
     if ticks_on:
-        xticks = [x for x in range(round(tmin-0.5),round(tmax+0.5),dt)]
+        xticks = [x for x in ti]#range(round(tmin-0.5),round(tmax+0.5),dt)]
     else:
         xticks=[]
     xticklabels = [str(x) for x in xticks]
