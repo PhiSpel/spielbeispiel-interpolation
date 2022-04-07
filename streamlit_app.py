@@ -224,7 +224,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
         xticklabels.append("0")
     if tmin <= t0 <= tmax:
         xticks.append(t0)
-        xlabel_string = "t0=" + str(round(t0,1))
+        xlabel_string = "t\N{SUBSCRIPT ZERO}=" + str(round(t0,1))
         xticklabels.append(xlabel_string)
     ax.set_xticks(xticks)
     ax.set_xticklabels(xticklabels)
@@ -239,7 +239,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
         yticklabels.append("0")
     if ymin <= ft0 <= ymax:
         yticks.append(ft0)
-        ylabel_string = "f(t0)=" + str(round(ft0,1))
+        ylabel_string = "f(t\N{SUBSCRIPT ZERO})=" + str(round(ft0,1))
         yticklabels.append(ylabel_string)
     ax.set_yticks(yticks)
     ax.set_yticklabels(yticklabels)
@@ -260,6 +260,54 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
 
     # make all changes visible
     st.session_state.mpl_fig.canvas.draw()
+    
+def make_description(interptype,factors):
+    if interptype == 'linear':
+        factor_lin_round = round(factors[0],3)
+        factor_const_round = round(factors[1],3)
+        linear_description = r'''
+        $f$ with linear approximation around $t_0$ is $\approx'''
+        if not factor_lin_round == 0:
+            linear_description+= str(factor_lin_round) + '''x'''
+        if factor_const_round > 0:
+            linear_description+='''+''' + str(factor_const_round) + '''$'''
+        elif factor_const_round==0:
+            linear_description+='''$'''
+        else:
+            linear_description+=str(factor_const_round) + '''$'''
+        description=linear_description
+    if interptype == 'spline':
+        factors = [round(elem,3) for elem in factors]
+        spline_description = r'''
+        $f$ with spline approximation around $t_0$ is $\approx'''
+        for i in range(0,4,1):
+            if (factors[i] > 0) & (i>0):
+                spline_description += '+'
+            if not factors[i] == 0:
+                if (3-i) > 1:
+                    spline_description += str(factors[i]) + 'x^' + str(3-i)
+                elif (3-i) == 1:
+                    spline_description += str(factors[i]) + 'x'
+                else:
+                    spline_description += str(factors[i])
+        spline_description+= '''$'''
+        description = spline_description
+    if interptype == 'polynomial':
+        polynomial_description = r'''
+        $$f(x)\approx'''
+        for degree in range(deg,-1,-1):
+            factor = round(y_interp[deg-degree],3)
+            if not factor == 0:
+                if (not degree == deg) & (factor > 0):
+                    polynomial_description+= '''+'''
+                if degree == 1:
+                    polynomial_description+= str(factor) + '''x'''
+                elif degree == 0:
+                    polynomial_description+= str(factor) + '''$$'''
+                else:
+                    polynomial_description+= str(factor) + '''x^{''' + str(degree) + '''}'''
+        description = polynomial_description
+    return description
 
 if __name__ == '__main__':
 
@@ -325,77 +373,31 @@ if __name__ == '__main__':
     
     with col4:
         t0 = st.slider(
-                't0',
+                't\N{SUBSCRIPT ZERO}',
                 min_value=float(0),
                 max_value=float(10),
                 value=float(1.5)
             )
     
-    col1,col2 = st.columns([1,3])
+    #col1,col2 = st.columns([1,3])
     if interptype == 'polynomial':
-        with col1:
-            deg = st.number_input(
-                    'degree',
-                    min_value=0,
-                    max_value=30,
-                    value=len(ti_std)
-        
-                    )
+        deg = len(string_to_list(ti_input))
+        # with col1:
+        #     deg = st.number_input(
+        #             'degree',
+        #             min_value=0,
+        #             max_value=30,
+        #             value=len(ti_std)
+        #             )
     else:
         deg=0
     # update the data
     t_interp,y_interp,ft0,ti,yi,factors = update_data(interptype,t0,ti_input,yi_input,res,deg)
     
-    with col2:
-        if interptype == 'linear':
-            factor_lin_round = round(factors[0],3)
-            factor_const_round = round(factors[1],3)
-            linear_description = r'''
-            $f$ with linear approximation around $t_0$ is $\approx'''
-            if not factor_lin_round == 0:
-                linear_description+= str(factor_lin_round) + '''x'''
-            if factor_const_round > 0:
-                linear_description+='''+''' + str(factor_const_round) + '''$'''
-            elif factor_const_round==0:
-                linear_description+='''$'''
-            else:
-                linear_description+=str(factor_const_round) + '''$'''
-            st.markdown(linear_description)
-        if interptype == 'spline':
-            factors = [round(elem,3) for elem in factors]
-            spline_description = r'''
-            $f$ with spline approximation around $t_0$ is $\approx'''
-            for i in range(0,4,1):
-                if (factors[i] > 0) & (i>0):
-                    spline_description += '+'
-                if not factors[i] == 0:
-                    if (3-i) > 1:
-                        spline_description += str(factors[i]) + 'x^' + str(3-i)
-                    elif (3-i) == 1:
-                        spline_description += str(factors[i]) + 'x'
-                    else:
-                        spline_description += str(factors[i])
-            spline_description+= '''$'''
-            st.markdown(spline_description)
-        if interptype == 'polynomial':
-            polynomial_description = r'''
-            $$f(x)\approx'''
-            for degree in range(deg,-1,-1):
-                factor = round(y_interp[deg-degree],3)
-                if not factor == 0:
-                    if (not degree == deg) & (factor > 0):
-                        polynomial_description+= '''+'''
-                    if degree == 1:
-                        polynomial_description+= str(factor) + '''x'''
-                    elif degree == 0:
-                        polynomial_description+= str(factor) + '''$$'''
-                    else:
-                        polynomial_description+= str(factor) + '''x^{''' + str(degree) + '''}'''
-            # factor0 = round(y_interp[deg],3)
-            # if factor0 > 0:
-            #     polynomial_description+= '''+'''
-            
-            st.markdown(polynomial_description)
+    #with col2:
+    
+    description = make_description(interptype,factors)
+    st.markdown(description)
     
     if 'Matplotlib' in backend:
 
