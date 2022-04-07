@@ -143,8 +143,21 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     
     tmin = min(ti)
     tmax = max(ti)
+    if tmax-tmin >= 10:
+        dt = round((tmax-tmin)/10)
+    elif tmax-tmin >= 2:
+        dt = 0.5
+    else:
+        dt = 0.1
+    
     ymin = min(min(yi),min(y_interp))
     ymax = max(max(yi),max(y_interp))
+    if ymax-ymin >= 10:
+        dy = round((ymax-ymin)/10)
+    elif ymax-ymin >= 2:
+        dy = 0.5
+    else:
+        dy = 0.1
 
     handles = st.session_state.handles
 
@@ -214,7 +227,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
 
     # set x and y ticks, labels and limits respectively
     if ticks_on:
-        xticks = [x for x in range(round(tmin),round(tmax),1)]
+        xticks = [x for x in range(round(tmin-0.5),round(tmax+0.5),dt)]
     else:
         xticks=[]
     xticklabels = [str(x) for x in xticks]
@@ -230,7 +243,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     ax.set_xticklabels(xticklabels)
 
     if ticks_on:
-        yticks = [x for x in range(round(ymin),round(ymax),1)]
+        yticks = [x for x in range(round(ymin-0.5),round(ymax+0.5),dy)]
     else:
         yticks=[]
     yticklabels = [str(x) for x in yticks]
