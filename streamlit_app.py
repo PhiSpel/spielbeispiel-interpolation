@@ -2,10 +2,6 @@ import streamlit as st
 
 from scipy.interpolate import interp1d, CubicSpline
 
-#from sympy import *
-#from sympy.parsing.sympy_parser import parse_expr
-#from sympy.abc import x
-
 import numpy as np
 import pandas as pd
 
@@ -362,7 +358,7 @@ if __name__ == '__main__':
         def clear_figure():
             del st.session_state['mpl_fig']
             del st.session_state['handles']
-        xkcd = st.sidebar.checkbox("use xkcd-style", value=True, on_change=clear_figure)
+        xkcd = st.sidebar.checkbox("use xkcd-style", value=False, on_change=clear_figure)
 
     ticks_on = st.sidebar.checkbox("show xticks and yticks", value=True, on_change=clear_figure)
     
