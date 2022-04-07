@@ -389,6 +389,8 @@ if __name__ == '__main__':
                 max_value=float(10),
                 value=float(1.5)
             )
+    if (t0 < min(string_to_list(ti_input))) | (t0 > max(string_to_list(ti_input))):
+        st.warning('t\N{SUBSCRIPT ZERO} must be within given set of time values!')
     
     #col1,col2 = st.columns([1,3])
     if interptype == 'polynomial':
