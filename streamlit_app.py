@@ -149,9 +149,10 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
 
     ymin = min(min(yi),min(y_interp))
     ymax = max(max(yi),max(y_interp))
-    if ymax-ymin > 5:
-        dy = round((ymax-ymin)/10)
-    elif ymax-ymin >= 2:
+    height = ymax - ymin
+    if height > 5:
+        dy = round(height/11)
+    elif height > 2:
         dy = 0.5
     else:
         dy = 0.1
