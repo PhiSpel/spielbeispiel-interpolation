@@ -151,7 +151,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     ymax = max(max(yi),max(y_interp))
     height = ymax - ymin
     if height > 5:
-        dy = round(height/11)
+        dy = round(height/10)
     elif height > 2:
         dy = 0.5
     else:
@@ -241,7 +241,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     ax.set_xticklabels(xticklabels)
 
     if ticks_on:
-        yticks = [x for x in range(round(ymin-0.5),round(ymax+0.5),dy)]
+        yticks = [x for x in np.arange(round(ymin-0.5),round(ymax+0.5),dy)]
     else:
         yticks=[]
     yticklabels = [str(x) for x in yticks]
