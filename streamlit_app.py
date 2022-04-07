@@ -139,13 +139,14 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     
     tmin = min(ti)
     tmax = max(ti)
-    if tmax-tmin > 5:
-        dt = round((tmax-tmin)/10)
-    elif tmax-tmin >= 2:
-        dt = 0.5
-    else:
-        dt = 0.1
-    
+    #if tmax-tmin > 5:
+    #    dt = round((tmax-tmin)/10)
+    #elif tmax-tmin >= 2:
+    #    dt = 0.5
+    #else:
+    #    dt = 0.1
+    dt = 1
+
     ymin = min(min(yi),min(y_interp))
     ymax = max(max(yi),max(y_interp))
     if ymax-ymin > 5:
