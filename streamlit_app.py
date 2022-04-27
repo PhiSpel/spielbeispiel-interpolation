@@ -223,7 +223,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
         update_vlines(h=handles["vline"], x=t0, ymin=float(min(0, ft0)), ymax=float(max(0, ft0)))
         update_hlines(h=handles["hline"], y=float(ft0), xmin=tmin, xmax=t0)
 
-    # set x and y ticks, labels and limits respectively
+    # set t and y ticks, labels and limits respectively
     if ticks_on:
         xticks = [x for x in ti]#range(round(tmin-0.5),round(tmax+0.5),dt)]
     else:
@@ -279,7 +279,7 @@ def make_description(interptype,factors):
         linear_description = r'''
         $f$ with linear approximation around $t_0$ is $\approx'''
         if not factor_lin_round == 0:
-            linear_description+= str(factor_lin_round) + '''x'''
+            linear_description+= str(factor_lin_round) + '''t'''
         if factor_const_round > 0:
             linear_description+='''+''' + str(factor_const_round) + '''$'''
         elif factor_const_round==0:
@@ -296,27 +296,27 @@ def make_description(interptype,factors):
                 spline_description += '+'
             if not factors[i] == 0:
                 if (3-i) > 1:
-                    spline_description += str(factors[i]) + 'x^' + str(3-i)
+                    spline_description += str(factors[i]) + 't^' + str(3-i)
                 elif (3-i) == 1:
-                    spline_description += str(factors[i]) + 'x'
+                    spline_description += str(factors[i]) + 't'
                 else:
                     spline_description += str(factors[i])
         spline_description+= '''$'''
         description = spline_description
     if interptype == 'polynomial':
         polynomial_description = r'''
-        $$f(x)\approx'''
+        $$f(t)\approx'''
         for degree in range(deg,-1,-1):
             factor = round(y_interp[deg-degree],3)
             if not factor == 0:
                 if (not degree == deg) & (factor > 0):
                     polynomial_description+= '''+'''
                 if degree == 1:
-                    polynomial_description+= str(factor) + '''x'''
+                    polynomial_description+= str(factor) + '''t'''
                 elif degree == 0:
                     polynomial_description+= str(factor) + '''$$'''
                 else:
-                    polynomial_description+= str(factor) + '''x^{''' + str(degree) + '''}'''
+                    polynomial_description+= str(factor) + '''t^{''' + str(degree) + '''}'''
         description = polynomial_description
     return description
 
@@ -374,11 +374,13 @@ if __name__ == '__main__':
         interptype = st.selectbox(label="interpolation type", options=('linear', 'spline', 'polynomial'), index=0)
         
     with col2:
-        ti_input = st.text_input(label='time values, space-separated, same amount as sensor values!',
+        ti_input = st.text_input(label='time values',
+                                 help = 'space-separated, same amount as sensor values!',
                                  value=ti_std_str,
                                  placeholder="please input time values")
     with col3:
-        yi_input = st.text_input(label='sensor values, space-separated, same amount as time values!',
+        yi_input = st.text_input(label='sensor values',
+                                 help = 'space-separated, same amount as time values!',
                                  value=yi_std_str,
                                  placeholder="please input sensor values")
     
