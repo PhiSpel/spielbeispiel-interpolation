@@ -304,24 +304,30 @@ def make_description(interptype,factors):
         spline_description+= '''$'''
         description = spline_description
     if interptype == 'polynomial':
-        polynomial_description = r'''
-        $$f(t)\approx'''
-        for degree in range(deg,-1,-1):
-            factor = round(y_interp[deg-degree],3)
-            if not factor == 0:
-                if (not degree == deg) & (factor > 0):
-                    polynomial_description+= '''+'''
-                if degree == 1:
-                    polynomial_description+= str(factor) + '''t'''
+        polynomial_description = r'''$$f(t) \approx '''
+        factors = [round(elem,3) for elem in factors]
+        deg = len(factors)
+        for i in range(0,deg):
+            if (factors[i] > 0) & (i < deg):
+                polynomial_description+='+'
+            degree = deg-i-1
+            if not factors[i] == 0:
+                if degree > 1:
+                    polynomial_description+=str(factors[i]) + 'x^{' + str(degree) + '}'
+                elif degree == 1:
+                    polynomial_description+=str(factors[i]) + 'x'
                 elif degree == 0:
-                    polynomial_description+= str(factor) + '''$$'''
-                else:
-                    polynomial_description+= str(factor) + '''t^{''' + str(degree) + '''}'''
+                    polynomial_description+=str(factors[i])
+            #st.write(str(i)+' '+str(factors[i]) + ' ' + str(deg))
+        polynomial_description+='''$$'''
         description = polynomial_description
+        #st.markdown(polynomial_description)
     return description
 
 if __name__ == '__main__':
 
+    debug = False
+    
     st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
     # create sidebar widgets
@@ -384,33 +390,32 @@ if __name__ == '__main__':
                                  value=yi_std_str,
                                  placeholder="please input sensor values")
     
+    ti = string_to_list(ti_input)
+    tmin = min(ti)
+    tmax = max(ti)
     with col4:
         t0 = st.slider(
                 't\N{SUBSCRIPT ZERO}',
-                min_value=float(0),
-                max_value=float(10),
-                value=float(1.5)
+                min_value=float(tmin),
+                max_value=float(tmax),
+                value=(tmax+tmin)/2*2/3 # sets t0 to 2/3 of interval
             )
-    if (t0 < min(string_to_list(ti_input))) | (t0 > max(string_to_list(ti_input))):
+    
+    if (t0 < tmin) | (t0 > tmax):
         st.warning('t\N{SUBSCRIPT ZERO} must be within given set of time values!')
     
     #col1,col2 = st.columns([1,3])
     if interptype == 'polynomial':
-        deg = len(string_to_list(ti_input))-1
-        # with col1:
-        #     deg = st.number_input(
-        #             'degree',
-        #             min_value=0,
-        #             max_value=30,
-        #             value=len(ti_std)
-        #             )
+        deg = len(ti)-1
     else:
         deg=0
+    if debug:
+        st.write(deg)
     # update the data
     t_interp,y_interp,ft0,ti,yi,factors = update_data(interptype,t0,ti_input,yi_input,res,deg)
     
-    #with col2:
-    
+    if debug:
+        st.write(factors)
     description = make_description(interptype,factors)
     st.markdown(description)
     
