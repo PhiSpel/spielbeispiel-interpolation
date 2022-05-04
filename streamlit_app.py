@@ -98,7 +98,7 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
     elif interptype == 'polynomial':
         z=np.polyfit(ti,yi,degree)
         y_interp=np.poly1d(z)
-        factors = 0
+        factors = z
     ft0 = float(y_interp(t0))
     y_interp = y_interp(t_interp)
     
@@ -241,7 +241,7 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     ax.set_xticklabels(xticklabels)
 
     if ticks_on:
-        yticks = [x for x in np.arange(round(ymin-0.5),round(ymax+0.5),dy)]
+        yticks = [x for x in yi]
     else:
         yticks=[]
     yticklabels = [str(x) for x in yticks]
@@ -396,7 +396,7 @@ if __name__ == '__main__':
     
     #col1,col2 = st.columns([1,3])
     if interptype == 'polynomial':
-        deg = len(string_to_list(ti_input))
+        deg = len(string_to_list(ti_input))-1
         # with col1:
         #     deg = st.number_input(
         #             'degree',
