@@ -5,7 +5,7 @@
 
 This is a simple web app demonstrating the interpolation of a set of data points. It is largely based on an [example by joergbrech](https://share.streamlit.io/joergbrech/truncated-taylor-series/main). [Click here](https://share.streamlit.io/PhiSpel/spielbeispiel-interpolation/main) to launch the app. This app is built using python and streamlit.
 
-![](screenshot.PNG)
+![](screenshot.png)
 
 To run locally, enter the following commands into a terminal to install all requirements first:
 
