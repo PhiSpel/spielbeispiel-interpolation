@@ -96,7 +96,7 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
         fac0 = factors[0]*-(xi**3)+ factors[1]*(xi**2) + factors[2]*-xi + factors[3]*1
         factors = [fac3,fac2,fac1,fac0]
     elif interptype == 'polynomial':
-        z=np.polyfit(ti,yi,degree)
+        z=np.polynomial.polynomial.polyfit(ti,yi,degree)
         y_interp=np.poly1d(z)
         factors = z
     ft0 = float(y_interp(t0))
