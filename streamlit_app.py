@@ -104,11 +104,97 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
     
     return t_interp,y_interp,ft0,ti,yi,factors
 
-
 def string_to_list(stringlist):
     list_of_str = stringlist.split()
     list_from_str = [float(x) for x in list_of_str]
     return list_from_str
+
+def bmatrix(a,matrixtype=''):
+    if matrixtype == 'b':
+        text = r' \begin{bmatrix} '
+    elif matrixtype == 'v':
+        text = r' \begin{matrix} '
+    #text += '\n'
+    for x in range(len(a)):
+        for y in range(len(a[x])):
+            text += str(a[x][y])
+            text += r' & '
+        text = text[:-2]
+        text += r'\\'
+        text += '\n'
+    if matrixtype == 'b':
+        text += r' \end{bmatrix} '
+    elif matrixtype == 'v':
+        text += r' \end{matrix} '
+    return text
+
+def print_equations(ti,yi,factors,textsize):
+    # preparations
+    matrix = [['' for j in range(len(factors))] for j in range(len(ti))]
+    for i in range(len(ti)):
+        for j in range(len(factors)):
+            if j == 0:
+                string = '1'
+            else:
+                string = r'x_{' + str(i+1) + r'}'
+            if j > 1:
+                string += r'^{' + str(j) + r'}'
+            matrix[i][j] = string
+    # factors
+    factors = np.round(factors,3)
+    factors[factors==0] = 0
+    factors = [[factors[i]] for i in range(factors.size-1,-1,-1)]
+    # yi
+    yi = np.round(yi,3)
+    yi[yi==0] = 0
+    yi = [[yi[i]] for i in range(yi.size)]
+    
+    # printing
+    equation_string = r'$'
+    equation_string += textsize
+    equation_string += bmatrix(matrix,'b')
+    equation_string += '\cdot '
+    #st.write(factors)
+    equation_string += ' ? '
+    equation_string += ' = '
+    yi_empty = [[''] for j in range(len(factors))]
+    for j in range(len(factors)):
+        yi_empty[j][0] = r'y_{' + str(j+1) + r'}'
+    equation_string += bmatrix(yi_empty,'b')
+    # 2nd equation
+    equation_string += r'\rightarrow'
+    matrix = [['' for j in range(len(factors))] for j in range(len(ti))]
+    for i in range(len(ti)):
+        for j in range(len(factors)):
+            if j == 0:
+                string = '1'
+            else:
+                string = str(ti[i])
+            if j > 1:
+                string += r'^{' + str(j) + r'}'
+            matrix[i][j] = string
+    equation_string += bmatrix(matrix,'b')
+    equation_string += '\cdot '
+    equation_string += ' ? '
+    equation_string += '='
+    equation_string += bmatrix(yi,'b')
+    # 3rd equation
+    equation_string += r'\rightarrow'
+    matrix = [['' for j in range(len(factors))] for j in range(len(ti))]
+    for i in range(len(ti)):
+        for j in range(len(factors)):
+            if j == 0:
+                string = '1'
+            else:
+                string = str(ti[i]**j)
+            matrix[i][j] = string
+    equation_string += bmatrix(matrix,'b')
+    equation_string += '\cdot '
+    equation_string += bmatrix(factors,'b')
+    equation_string += ' = '
+    equation_string += bmatrix(yi,'b')
+    equation_string += r'$'
+    return equation_string
 
 # To Do: Why does caching update_plot hang?
 # @st.cache(suppress_st_warning=True)
@@ -419,6 +505,11 @@ if __name__ == '__main__':
     description = make_description(interptype,factors)
     st.markdown(description)
     
+    if interptype == 'polynomial':
+        with st.expander('Show equation solved by np.polyfit using a Vandermonde matrix'):
+            textsize = st.sidebar.selectbox(label="font size of formula", options=[r'\normalsize',r'\small',r'\footnotesize',r'\scriptsize',r'\tiny'],index=2)
+            st.markdown(print_equations(ti,yi,factors,textsize))
+    
     if 'Matplotlib' in backend:
 
         if xkcd:
@@ -468,3 +559,4 @@ if __name__ == '__main__':
             .interactive()
         altair_chart = (chart + pnt).properties(width=800, height=400)
         st.session_state.chart.altair_chart(altair_chart, use_container_width=True)
+
