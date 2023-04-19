@@ -57,7 +57,7 @@ def update_hlines(*, h, y, xmin=None, xmax=None):
 #############################################
 
 #@st.cache(suppress_st_warning=True)
-def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
+def update_data(interptype, t0, ti_input, yi_input, resolution, degree):
     """
     y_interp,y = update_data(interptype,t,ti,yi)
     """
@@ -71,9 +71,9 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
     length = max(ti)-min(ti)
     dt = length/resolution
     
-    t_interp = np.arange(tmin,tmax,dt)
+    t_interp = np.arange(tmin, tmax, dt)
     if interptype == 'linear':
-        y_interp=interp1d(ti,yi)
+        y_interp = interp1d(ti, yi)
         # reverse-engineering function near t0
         dtlin = dt/100
         yright = y_interp(t0+dtlin)
@@ -82,9 +82,9 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
         factor_const = float(y_interp(t0)) - factor_lin*t0
         factors=[factor_lin,factor_const]
     elif interptype == 'spline':
-        y_interp=CubicSpline(ti,yi)
-        i = np.searchsorted(ti,t0)-1
-        factors=[y_interp.c[0,i],y_interp.c[1,i],y_interp.c[2,i],y_interp.c[3,i]]
+        y_interp=CubicSpline(ti, yi)
+        i = np.searchsorted(ti, t0)-1
+        factors=[y_interp.c[0, i], y_interp.c[1, i], y_interp.c[2, i], y_interp.c[3, i]]
         # convert factors from fac*(x-x[i])**(3-k) to fac*x**(3-k)
         # (x-xi)^3 = x^3 - 3xi x^2 + 3xi^2 x - xi^3
         # (x-xi)^2 =           x^2 - 2xi   x + xi^2
@@ -94,26 +94,32 @@ def update_data(interptype,t0,ti_input,yi_input,resolution,degree):
         fac2 = factors[0]*-3*xi     + factors[1]*1
         fac1 = factors[0]*3*(xi**2) + factors[1]*-2*xi   + factors[2]*1
         fac0 = factors[0]*-(xi**3)+ factors[1]*(xi**2) + factors[2]*-xi + factors[3]*1
-        factors = [fac3,fac2,fac1,fac0]
+        factors = [fac3, fac2, fac1, fac0]
     elif interptype == 'polynomial':
-        z=np.polyfit(ti,yi,degree)
-        y_interp=np.poly1d(z)
+        z = np.polyfit(ti, yi, degree)
+        y_interp = np.poly1d(z)
         factors = z
+    else:
+        return ValueError
     ft0 = float(y_interp(t0))
     y_interp = y_interp(t_interp)
     
-    return t_interp,y_interp,ft0,ti,yi,factors
+    return t_interp, y_interp, ft0, ti, yi, factors
+
 
 def string_to_list(stringlist):
     list_of_str = stringlist.split()
     list_from_str = [float(x) for x in list_of_str]
     return list_from_str
 
-def bmatrix(a,matrixtype=''):
+
+def bmatrix(a, matrixtype = ''):
     if matrixtype == 'b':
         text = r' \begin{bmatrix} '
     elif matrixtype == 'v':
         text = r' \begin{matrix} '
+    else:
+        return ValueError
     #text += '\n'
     for x in range(len(a)):
         for y in range(len(a[x])):
@@ -127,6 +133,7 @@ def bmatrix(a,matrixtype=''):
     elif matrixtype == 'v':
         text += r' \end{matrix} '
     return text
+
 
 def print_equations(ti,yi,factors,textsize):
     # preparations
@@ -196,6 +203,7 @@ def print_equations(ti,yi,factors,textsize):
     equation_string += r'$'
     return equation_string
 
+
 # To Do: Why does caching update_plot hang?
 # @st.cache(suppress_st_warning=True)
 def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input, ticks_on):
@@ -207,14 +215,10 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
 
     :param t0: Evaluation point of the function/Taylor polynomial
     :param ft0: Function evaluated at t0
-    :param xs: numpy-array of x-coordinates
-    :param ys: numpy-array of f(x)-coordinates
-    :param ps: numpy-array of P(x)-coordinates, where P is the Taylor polynomial
-    :param visible: A flag wether the Taylor polynomial is visible or not
-    :param xmin: minimum x-range value
-    :param xmax: maximum x-range value
-    :param ymin: minimum y-range value
-    :param ymax: maximum y-range value
+    :param ti: numpy-array of x-coordinates
+    :param yi: numpy-array of f(x)-coordinates
+    :param y_interp: numpy-array of P(x)-coordinates, where P is the Taylor polynomial
+    :param visible: A flag whether the Taylor polynomial is visible or not
     :return: none.
     """
     
@@ -233,8 +237,8 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
     #    dt = 0.1
     #dt = 1
 
-    ymin = min(min(yi),min(y_interp))
-    ymax = max(max(yi),max(y_interp))
+    ymin = min(min(yi), min(y_interp))
+    ymax = max(max(yi), max(y_interp))
     height = ymax - ymin
     if height > 5:
         dy = round(height/10)
@@ -357,8 +361,9 @@ def update_plot(ti, yi, t0, ft0, t_interp, y_interp, visible, ti_input, yi_input
 
     # make all changes visible
     st.session_state.mpl_fig.canvas.draw()
-    
-def make_description(interptype,factors):
+
+
+def make_description(interptype, factors):
     if interptype == 'linear':
         factor_lin_round = round(factors[0],3)
         factor_const_round = round(factors[1],3)
@@ -373,7 +378,7 @@ def make_description(interptype,factors):
         else:
             linear_description+=str(factor_const_round) + '''$'''
         description=linear_description
-    if interptype == 'spline':
+    elif interptype == 'spline':
         factors = [round(elem,3) for elem in factors]
         spline_description = r'''
         $f$ with spline approximation around $t_0$ is $\approx'''
@@ -389,55 +394,44 @@ def make_description(interptype,factors):
                     spline_description += str(factors[i])
         spline_description+= '''$'''
         description = spline_description
-    if interptype == 'polynomial':
-        polynomial_description = r'''$$f(t) \approx '''
-        factors = [round(elem,3) for elem in factors]
+    elif interptype == 'polynomial':
+        polynomial_description = r'''$f$ calculated by np.polyfit is $$f(t) \approx '''
+        factors = [round(elem, 3) for elem in factors]
         deg = len(factors)
-        for i in range(0,deg):
+        for i in range(0, deg):
             if (factors[i] > 0) & (i < deg):
-                polynomial_description+='+'
+                polynomial_description += '+'
             degree = deg-i-1
             if not factors[i] == 0:
                 if degree > 1:
-                    polynomial_description+=str(factors[i]) + 'x^{' + str(degree) + '}'
+                    polynomial_description += str(factors[i]) + 't^{' + str(degree) + '}'
                 elif degree == 1:
-                    polynomial_description+=str(factors[i]) + 'x'
+                    polynomial_description += str(factors[i]) + 't'
                 elif degree == 0:
-                    polynomial_description+=str(factors[i])
-            #st.write(str(i)+' '+str(factors[i]) + ' ' + str(deg))
-        polynomial_description+='''$$'''
+                    polynomial_description += str(factors[i])
+        polynomial_description += '''$$'''
         description = polynomial_description
-        #st.markdown(polynomial_description)
+    else:
+        return ValueError
     return description
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     debug = False
-    
     st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
     # create sidebar widgets
-
     st.sidebar.title("Advanced settings")
-
-    #func_str = st.sidebar.text_input(label="function",
-    #                                 value='25 + exp(x)*sin(x**2) - 10*x')
-
     st.sidebar.markdown("Visualization Options")
 
     # Good for in-classroom use
     qr = st.sidebar.checkbox(label="Display QR Code", value=False)
-
     toggle_interp = st.sidebar.checkbox(label='Display Interpolation', value=True)
-
     res = st.sidebar.number_input(label='resolution', value=100, step=10)
-
     backend = 'Matplotlib' #st.sidebar.selectbox(label="Backend", options=('Matplotlib', 'Altair'), index=0)
 
     # Create main page widgets
-
     tcol1, tcol2 = st.columns(2)
-
     with tcol1:
         st.title('Interpolated Data Points')
     with tcol2:
@@ -448,11 +442,12 @@ if __name__ == '__main__':
 
     # prepare matplotlib plot
     if 'Matplotlib' in backend:
-
         def clear_figure():
             del st.session_state['mpl_fig']
             del st.session_state['handles']
         xkcd = st.sidebar.checkbox("use xkcd-style", value=False, on_change=clear_figure)
+    else:
+        raise EnvironmentError
 
     ticks_on = st.sidebar.checkbox("show xticks and yticks", value=True, on_change=clear_figure)
     
@@ -492,38 +487,47 @@ if __name__ == '__main__':
     
     #col1,col2 = st.columns([1,3])
     if interptype == 'polynomial':
-        deg = len(ti)-1
+        deg = st.slider('Create polynomail of degree: ', min_value=0, max_value=20, value=(len(ti)-1))
     else:
-        deg=0
+        deg = 0
     if debug:
         st.write(deg)
     # update the data
-    t_interp,y_interp,ft0,ti,yi,factors = update_data(interptype,t0,ti_input,yi_input,res,deg)
+    t_interp, y_interp, ft0, ti, yi, factors = update_data(interptype, t0, ti_input, yi_input, res, deg)
     
     if debug:
         st.write(factors)
     description = make_description(interptype,factors)
-    st.markdown(description)
+    [col1, col2] = st.columns(2)
+    # with col1:
+    #     st.markdown(description)
+    # with col2:
+    #     st.markdown(r"$$f(t_0) \approx " + str(round(ft0, 3)) + r"$$")
+    st.markdown(r"Approximated $$f(t_0) \approx " + str(round(ft0, 3)) + r"$$. " + description)
     
     if interptype == 'polynomial':
         with st.expander('Show equation solved by np.polyfit using a Vandermonde matrix'):
-            textsize = st.sidebar.selectbox(label="font size of formula", options=[r'\normalsize',r'\small',r'\footnotesize',r'\scriptsize',r'\tiny'],index=2)
-            st.markdown(print_equations(ti,yi,factors,textsize))
+            textsize = st.sidebar.selectbox(
+                label="font size of formula",
+                options=[r'\normalsize', r'\small', r'\footnotesize', r'\scriptsize', r'\tiny'],
+                index=2)
+            if deg == len(ti)-1:
+                st.markdown(print_equations(ti, yi, factors, textsize))
+            else:
+                st.markdown("Vandermonde matrix is only exact for polynomial of degree n-1, in this case "
+                            + str(len(ti)-1) + ".")
     
     if 'Matplotlib' in backend:
-
         if xkcd:
             # set rc parameters to xkcd style
             plt.xkcd()
         else:
             # reset rc parameters to default
             plt.rcdefaults()
-
         # initialize the Matplotlib figure and initialize an empty dict of plot handles
         if 'mpl_fig' not in st.session_state:
             st.session_state.mpl_fig = plt.figure(figsize=(8, 3))
             st.session_state.mpl_fig.add_axes([0., 0., 1., 1.])
-
         if 'handles' not in st.session_state:
             st.session_state.handles = {}
 
@@ -559,4 +563,3 @@ if __name__ == '__main__':
             .interactive()
         altair_chart = (chart + pnt).properties(width=800, height=400)
         st.session_state.chart.altair_chart(altair_chart, use_container_width=True)
-
