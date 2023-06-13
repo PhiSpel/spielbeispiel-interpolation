@@ -8,12 +8,6 @@ import pandas as pd
 import altair as alt
 
 import matplotlib.pyplot as plt
-import matplotlib.font_manager
-
-
-# make sure the humor sans font is found. This only needs to be done once
-# on a system, but it is done here at start up for usage on share.streamlit.io.
-matplotlib.font_manager.findfont('Humor Sans', rebuild_if_missing=True)
 
 # Define some helpful functions
 
